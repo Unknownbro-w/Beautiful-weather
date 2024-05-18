@@ -5,14 +5,49 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Weather App</title>
     <link rel="stylesheet" href="styles.css">
+       
+    
 </head>
 <body>
-    <div class="container">
-        <h1>Weather App</h1>
-        <input type="text" id="cityInput" placeholder="Enter city">
-        <button onclick="getWeather()">Get Weather</button>
-        <div id="weatherInfo"></div>
-    </div>
-    <script src="script.js"></script>
+    <h1>Weather App</h1>
+    <form id="weatherForm">
+        <label for="cityInput">Enter city:</label>
+        <input type="text" id="cityInput" name="city" required>
+        <button type="submit">Get Weather</button>
+    </form>
+    <div id="weatherInfo"></div>
+
+    <script>
+        document.getElementById('weatherForm').addEventListener('submit', function(event) {
+            event.preventDefault();
+            const city = document.getElementById('cityInput').value;
+
+            fetch(`https://www.metaweather.com/api/location/search/?query=${city}`)
+                .then(response => response.json())
+                .then(data => {
+                    if (data.length === 0) {
+                        throw new Error('City not found');
+                    }
+                    const woeid = data[0].woeid;
+                    return fetch(`https://www.metaweather.com/api/location/${woeid}/`);
+                })
+                .then(response => response.json())
+                .then(data => {
+                    const weatherInfo = document.getElementById('weatherInfo');
+                    const weather = data.consolidated_weather[0];
+                    weatherInfo.innerHTML = `
+                        <h2>${data.title}</h2>
+                        <p>Weather: ${weather.weather_state_name}</p>
+                        <p>Temperature: ${weather.the_temp.toFixed(2)}°C</p>
+                        <p>Humidity: ${weather.humidity}%</p>
+                        <p>Wind Speed: ${weather.wind_speed.toFixed(2)} m/s</p>
+                    `;
+                })
+                .catch(error => {
+                    const weatherInfo = document.getElementById('weatherInfo');
+                    weatherInfo.innerHTML = `<p>${error.message}</p>`;
+                });
+        });
+    </script>
 </body>
 </html>
